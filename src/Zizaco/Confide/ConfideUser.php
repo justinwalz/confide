@@ -125,28 +125,38 @@ class ConfideUser extends Ardent implements UserInterface {
     /**
      * Change user password
      *
+     * NOTE: Overriding default behavior due to bug in Confide.
+     *
      * @param  $params
      * @return string
      */
     public function resetPassword( $params )
     {
-        $password = array_get($params, 'password', '');
+        $this->password = array_get($params, 'password', '');
+        $this->password_confirmation = array_get($params, 'password_confirmation', '');
+
+        \Log::info("password             ", [$this->password]);
+        \Log::info("password_confirmation", [$this->password_confirmation]);
 
         $passwordValidators = array(
             'password' => static::$rules['password'],
             'password_confirmation' => static::$rules['password_confirmation'],
         );
-        $validationResult = static::$app['confide.repository']->validate($passwordValidators);
+        \Log::info("passwordValidators", ['val' => $passwordValidators]);
+//        $validationResult = static::$app['confide.repository']->validate($passwordValidators);
+        $validationResult = $this->validate($passwordValidators);
 
         if ( $validationResult )
         {
             return static::$app['confide.repository']
-                ->changePassword( $this, static::$app['hash']->make($password) );
+//                ->changePassword( $this, static::$app['hash']->make($password) );
+                ->changePassword( $this, static::$app['hash']->make($this->password) );
         }
         else{
             return false;
         }
     }
+
 
     /**
      * Get the token value for the "remember me" session.
